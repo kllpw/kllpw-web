@@ -18,10 +18,16 @@ func NewManager() *Manager {
 }
 
 // RegisterClient adds client to  store
-func (m *Manager) RegisterClient(w http.ResponseWriter, r *http.Request){
-	usr, pwd, _ := r.BasicAuth()
-	log.Printf("Registering: %s", usr)
-	m.clients[usr] = credentials{username: usr, password: []byte(pwd)}
+func (m *Manager) RegisterClient(w http.ResponseWriter, r *http.Request) bool {
+	u, p, _ := r.BasicAuth()
+	_, found := m.clients[u]
+	if !found {
+		m.clients[u] = credentials{username: u, password:[]byte(p)}
+		log.Printf("Registering: %s", u)
+		return true
+	}
+	log.Printf("Client already exists: %s", u)
+	return false
 }
 
 // CheckClientCredentials checks if the client is registered and details match those stored server side
