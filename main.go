@@ -6,6 +6,8 @@ import (
     "log"
     "github.com/gorilla/mux"
     "./client"
+    "./ascii"
+   
 )
 
 func protection(next http.Handler) http.Handler {
@@ -20,15 +22,80 @@ func protection(next http.Handler) http.Handler {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-    fmt.Fprintln(w, "Welcome")
+    header := ascii.RenderStringHTML(" kll.pw")
+    fmt.Fprint(w, 
+        "<html>" +
+        header + 
+        "</html>")
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
-   client.LoginClient(w, r)
+    if client.LoginClient(w, r) {
+        fmt.Fprint(w, "Successful")   
+    } else {
+        client.LogoutClient(w, r)
+        http.Error(w, "Bad Request", http.StatusBadRequest)
+    }
+}
+
+func loginFormHandler(w http.ResponseWriter, r *http.Request) {
+    header := ascii.RenderStringHTML(" kll.pw")
+    fmt.Fprint(w, 
+        `<html><header>
+        <script>
+        function authenticateUser(user, password)
+        {
+            var token = user + ":" + password;
+            var hash = btoa(token); 
+
+            return "Basic " + hash;
+        }
+        function requestAuthentication() {
+            var username=document.getElementById("username").value;
+            var password=document.getElementById("password").value;
+            // New XMLHTTPRequest
+            var request = new XMLHttpRequest();
+            request.open("POST", "/user/login", false);
+            request.setRequestHeader("Authorization", authenticateUser(username, password));  
+            request.send();
+            // view request status
+            document.getElementById("response").innerHTML = request.responseText;
+        }
+        function register() {
+            var username=document.getElementById("username").value;
+            var password=document.getElementById("password").value;
+            
+            // New XMLHTTPRequest
+            var request = new XMLHttpRequest();
+            request.open("POST", "/user/register", false);
+            request.setRequestHeader("Authorization", authenticateUser(username, password));  
+            request.send();
+            // view request status
+            document.getElementById("response").innerHTML = request.responseText;
+        }
+        </script>
+        </header>` +
+        header + 
+        `<div>
+        <label>Username:</label><input id="username" name="username"></input>
+        <label>Password:</label><input type="password" id="password" name="password"></input>
+        </div>
+        <div>
+        <input type="button" value="register"onclick="register();"></input>
+        <input type="button" value="login"onclick="requestAuthentication();"></input>
+        <label>Response:</label><label id="response" name="response">Waiting....</label>
+        </div>
+        </html>`)
+    
 }
 
 func registerHandler(w http.ResponseWriter, r *http.Request) {
-    client.RegisterClient(w, r)
+    if client.RegisterClient(w, r) {
+        fmt.Fprint(w, "Client Registered")    
+    } else {
+        fmt.Fprint(w, "Client Registration failed")    
+    }
+    
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
@@ -36,14 +103,16 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func handlerDash(w http.ResponseWriter, r *http.Request) {
-    fmt.Fprintln(w, "hello authed client")
+    fmt.Fprint(w, ascii.RenderString("Welcome"))
 }
 
 func main() {
-      r := mux.NewRouter()
+    fmt.Print("\n" + ascii.RenderString(" kll.pw"))
+    r := mux.NewRouter()
     r.HandleFunc("/", indexHandler)
 	
-	userRoute := r.PathPrefix("/user").Subrouter()
+    userRoute := r.PathPrefix("/user").Subrouter()
+    userRoute.HandleFunc("", loginFormHandler)
 	userRoute.HandleFunc("/login", loginHandler)
     userRoute.HandleFunc("/logout", logoutHandler)
     userRoute.HandleFunc("/register", registerHandler)
@@ -52,8 +121,8 @@ func main() {
 	protected.Use(protection)
     protected.HandleFunc("/dashboard", handlerDash)
 
-
     log.Println("Ready...")
     log.Fatal(http.ListenAndServe("localhost:8000", r))
     
 }
+
