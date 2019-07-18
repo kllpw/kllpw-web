@@ -16,9 +16,9 @@ func IsValidClient(w http.ResponseWriter, r *http.Request) bool {
 }
 
 // RegisterClient stores provided username and password for checks later
-func RegisterClient(w http.ResponseWriter, r *http.Request) {
+func RegisterClient(w http.ResponseWriter, r *http.Request) bool {
 	log.Printf("Registering Client")
-	credManager.RegisterClient(w, r)
+	return credManager.RegisterClient(w, r)
 }
 
 // LoginClient checks provided credentials and stores session credentials and
