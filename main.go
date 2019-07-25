@@ -2,8 +2,8 @@ package main
 
 import (
 	"os"
-	"./ascii"
-	"./client"
+	"github.com/kllpw/kllpw-web/ascii"
+	"github.com/kllpw/kllpw-web/client"
 	"fmt"
 	"github.com/gorilla/mux"
 	"log"
