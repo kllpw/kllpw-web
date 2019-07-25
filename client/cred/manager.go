@@ -1,7 +1,6 @@
 package cred
 
 import (
-	"net/http"
 	"log"
 )
 
@@ -12,28 +11,27 @@ type Manager struct {
 
 // NewManager returns a new manager
 func NewManager() *Manager {
-	m := Manager{}
-	m.clients = make(map[string]credentials, 0)
+	m := Manager{clients: make(map[string]credentials, 0)}
 	return &m
 }
 
 // RegisterClient adds client to  store
-func (m *Manager) RegisterClient(w http.ResponseWriter, r *http.Request) bool {
-	u, p, _ := r.BasicAuth()
-	_, found := m.clients[u]
+func (m *Manager) RegisterClient(username string, password string) bool {
+	_, found := m.clients[username]
 	if !found {
-		m.clients[u] = credentials{username: u, password:[]byte(p)}
-		log.Printf("Registering: %s", u)
+		if m.clients == nil {
+			m.clients = make(map[string]credentials, 0)
+		}
+		m.clients[username] = credentials{username: username, password:[]byte(password)}
+		log.Printf("Registering: %s", username)
 		return true
 	}
-	log.Printf("Client already exists: %s", u)
+	log.Printf("Client already exists: %s", username)
 	return false
 }
 
 // CheckClientCredentials checks if the client is registered and details match those stored server side
-func (m *Manager) CheckClientCredentials(w http.ResponseWriter, r *http.Request) bool {
-	w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
-	username, password, _ := r.BasicAuth()
+func (m *Manager) CheckClientCredentials(username string, password string) bool {
 	log.Printf("Validating login for: %s", username)
 	usrCrd, found := m.clients[username]
 	if found {
