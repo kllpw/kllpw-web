@@ -1,7 +1,6 @@
 package client
 
 import (
-	"os"
 	"encoding/gob"
 	"log"
 	"net/http"
