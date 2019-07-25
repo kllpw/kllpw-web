@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"./ascii"
 	"./client"
 	"fmt"
@@ -9,7 +10,7 @@ import (
 	"net/http"
 )
 
-var clientManager = client.NewManager("22")
+var clientManager = client.NewManager(os.Getenv("SESSION_KEYS"))
 
 func protection(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
