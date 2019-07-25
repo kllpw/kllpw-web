@@ -5,27 +5,47 @@ import (
 	"net/http"
 	sess "./sess" 
 	cred "./cred"
+	uuid "github.com/nu7hatch/gouuid"
 )
+// Client is uuid of current client
+type Client struct {
+	uuid *uuid.UUID
+}
 
-var sessManager =  sess.NewManager()
-var credManager =  cred.NewManager()
+var sessManager sess.Manager
+var credManager cred.Manager
+
+// Manager handles client with session manager and credetials managers
+type Manager struct {
+	sessManager *sess.Manager
+	credManager *cred.Manager
+}
+
+// NewManager returns a client manger with session and credential checks
+func NewManager(sesskey string) *Manager {
+	sm := sess.NewManager(sesskey)
+	cm := cred.NewManager()
+	m := Manager{sessManager: sm, credManager: cm}
+	return &m
+}
 
 // IsValidClient checks for stored session key if non found checks basic auth credentials
-func IsValidClient(w http.ResponseWriter, r *http.Request) bool {
-	return sessManager.IsClientAuthed(w, r)
+func (m *Manager) IsValidClient(w http.ResponseWriter, r *http.Request) bool {
+	return m.sessManager.IsClientAuthed(w, r)
 }
 
 // RegisterClient stores provided username and password for checks later
-func RegisterClient(w http.ResponseWriter, r *http.Request) bool {
-	log.Printf("Registering Client")
-	return credManager.RegisterClient(w, r)
+func (m *Manager) RegisterClient(w http.ResponseWriter, r *http.Request) bool {
+	u, p, _ := r.BasicAuth()
+	return m.credManager.RegisterClient(u,p)
 }
 
 // LoginClient checks provided credentials and stores session credentials and
 // returns wether or not login was successful
-func LoginClient(w http.ResponseWriter, r *http.Request) bool {
-	if credManager.CheckClientCredentials(w, r) {
-		sessManager.AuthenticateClient(w, r)
+func (m *Manager) LoginClient(w http.ResponseWriter, r *http.Request) bool {
+	u, p, _ := r.BasicAuth()
+	if m.credManager.CheckClientCredentials(u, p) {
+		m.sessManager.AuthenticateClient(w, r)
 		log.Printf("Login successful")
 		return true
 	}
@@ -34,7 +54,7 @@ func LoginClient(w http.ResponseWriter, r *http.Request) bool {
 }
 
 // LogoutClient removes session stored auth cookie
-func LogoutClient(w http.ResponseWriter, r *http.Request) {
-	sessManager.DeauthenticateClient(w, r)
+func (m *Manager) LogoutClient(w http.ResponseWriter, r *http.Request) {
+	m.sessManager.DeauthenticateClient(w, r)
 }
 
