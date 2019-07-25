@@ -46,13 +46,13 @@ func (m *Manager) DeauthenticateClient(w http.ResponseWriter, r *http.Request){
 	session, _ := m.store.Get(r, sessionKey)
 	currentUUID := session.Values[authKey]
 	if currentUUID != nil {
-	u := currentUUID.(*uuid.UUID)
-	uuidPos := m.findUUID(u)
-	if uuidPos > -1 {
-		m.removeUUID(uuidPos)
-		log.Print("Session Deauthenticated ", currentUUID)
+		u := currentUUID.(uuid.UUID)
+		uuidPos := m.findUUID(&u)
+		if uuidPos > -1 {
+			m.removeUUID(uuidPos)
+			log.Print("Session Deauthenticated ", currentUUID)
+		}
 	}
-}
 	session.Save(r, w)
 }
 
@@ -75,8 +75,8 @@ func (m *Manager) IsClientAuthed(w http.ResponseWriter, r *http.Request) bool {
 	session, _ := m.store.Get(r, sessionKey)
 	currentUUID := session.Values[authKey]
 	if currentUUID != nil {
-		u := currentUUID.(*uuid.UUID)
-		uuidPos := m.findUUID(u)
+		u := currentUUID.(uuid.UUID)
+		uuidPos := m.findUUID(&u)
 		if uuidPos > -1 {
 			log.Print(currentUUID, " is an Active session")
 			return true
