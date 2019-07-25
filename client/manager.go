@@ -3,9 +3,9 @@ package client
 import (
 	"log"
 	"net/http"
-	sess "./sess" 
-	cred "./cred"
 	uuid "github.com/nu7hatch/gouuid"
+	sess "github.com/kllpw/kllpw-web/client/sess"
+	cred "github.com/kllpw/kllpw-web/client/cred"
 )
 // Client is uuid of current client
 type Client struct {
