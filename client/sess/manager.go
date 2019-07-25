@@ -1,6 +1,7 @@
 package client
 
 import (
+	"os"
 	"encoding/gob"
 	"log"
 	"net/http"
@@ -23,7 +24,7 @@ type Manager struct {
 // NewManager returns a new manager with key from OS variable "SESSION_KEYS"
 func NewManager(sesskey string) *Manager {
 	m := Manager{}
-	m.store = sessions.NewCookieStore([]byte(sesskey))
+	m.store = sessions.NewCookieStore([]byte(sessionKey))
 	return &m
 }
 
