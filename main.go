@@ -1,47 +1,53 @@
 package main
 
 import (
-    "fmt"
-    "net/http"
-    "log"
-    "github.com/gorilla/mux"
-    "./client"
-    "./ascii"
-   
+	"./ascii"
+	"./client"
+	"fmt"
+	"github.com/gorilla/mux"
+	"log"
+	"net/http"
 )
 
+var clientManager = client.NewManager("22")
+
 func protection(next http.Handler) http.Handler {
-    fn := func(w http.ResponseWriter, r *http.Request) {
-        if client.IsValidClient(w, r) {
-            next.ServeHTTP(w, r)
-        } else {
-            http.Error(w, "Forbidden", http.StatusForbidden)
-        }
-    }
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		if clientManager.IsValidClient(w, r) {
+			next.ServeHTTP(w, r)
+		} else {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+		}
+	}
 	return http.HandlerFunc(fn)
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-    header := ascii.RenderStringHTML(" kll.pw")
-    fmt.Fprint(w, 
-        "<html>" +
-        header + 
-        "</html>")
+	header := ascii.RenderStringHTML(" kll.pw")
+	fmt.Fprint(w,
+		"<html>"+
+			header+
+			`
+        <a href="/user">register</a>
+        <a href="/user">login</a>
+        <a href="/user/logout">logout</a>
+        <a href="/admin/dashboard">admin/dashboard</a>
+        </html>`)
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
-    if client.LoginClient(w, r) {
-        fmt.Fprint(w, "Successful")   
-    } else {
-        client.LogoutClient(w, r)
-        http.Error(w, "Bad Request", http.StatusBadRequest)
-    }
+	if clientManager.LoginClient(w, r) {
+		fmt.Fprint(w, "Successful")
+	} else {
+		clientManager.LogoutClient(w, r)
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+	}
 }
 
 func loginFormHandler(w http.ResponseWriter, r *http.Request) {
-    header := ascii.RenderStringHTML(" kll.pw")
-    fmt.Fprint(w, 
-        `<html><header>
+	header := ascii.RenderStringHTML(" kll.pw")
+	fmt.Fprint(w,
+		`<html><header>
         <script>
         function authenticateUser(user, password)
         {
@@ -74,9 +80,10 @@ func loginFormHandler(w http.ResponseWriter, r *http.Request) {
             document.getElementById("response").innerHTML = request.responseText;
         }
         </script>
-        </header>` +
-        header + 
-        `<div>
+        </header>`+
+			header+
+			`<div>
+        <a href="/">home </a>
         <label>Username:</label><input id="username" name="username"></input>
         <label>Password:</label><input type="password" id="password" name="password"></input>
         </div>
@@ -86,43 +93,43 @@ func loginFormHandler(w http.ResponseWriter, r *http.Request) {
         <label>Response:</label><label id="response" name="response">Waiting....</label>
         </div>
         </html>`)
-    
+
 }
 
 func registerHandler(w http.ResponseWriter, r *http.Request) {
-    if client.RegisterClient(w, r) {
-        fmt.Fprint(w, "Client Registered")    
-    } else {
-        fmt.Fprint(w, "Client Registration failed")    
-    }
-    
+	if clientManager.RegisterClient(w, r) {
+		fmt.Fprint(w, "Client Registered")
+	} else {
+		fmt.Fprint(w, "Client Registration failed")
+	}
+
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
-    client.LogoutClient(w, r)
+	clientManager.LogoutClient(w, r)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func handlerDash(w http.ResponseWriter, r *http.Request) {
-    fmt.Fprint(w, ascii.RenderString("Welcome"))
+	fmt.Fprint(w, ascii.RenderString("Welcome"))
 }
 
 func main() {
-    fmt.Print("\n" + ascii.RenderString(" kll.pw"))
-    r := mux.NewRouter()
-    r.HandleFunc("/", indexHandler)
-	
-    userRoute := r.PathPrefix("/user").Subrouter()
-    userRoute.HandleFunc("", loginFormHandler)
+	fmt.Print("\n" + ascii.RenderString(" kll.pw"))
+	r := mux.NewRouter()
+	r.HandleFunc("/", indexHandler)
+
+	userRoute := r.PathPrefix("/user").Subrouter()
+	userRoute.HandleFunc("", loginFormHandler)
 	userRoute.HandleFunc("/login", loginHandler)
-    userRoute.HandleFunc("/logout", logoutHandler)
-    userRoute.HandleFunc("/register", registerHandler)
+	userRoute.HandleFunc("/logout", logoutHandler)
+	userRoute.HandleFunc("/register", registerHandler)
 
 	protected := r.PathPrefix("/admin").Subrouter()
 	protected.Use(protection)
-    protected.HandleFunc("/dashboard", handlerDash)
+	protected.HandleFunc("/dashboard", handlerDash)
 
-    log.Println("Ready...")
-    log.Fatal(http.ListenAndServe("localhost:8000", r))
-    
+	log.Println("Ready...")
+	log.Fatal(http.ListenAndServe("localhost:8000", r))
+
 }
-
