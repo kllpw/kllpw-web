@@ -1,6 +1,7 @@
 package cred
 
 import (
+	"golang.org/x/crypto/bcrypt"
 	"log"
 )
 
@@ -22,7 +23,11 @@ func (m *Manager) RegisterClient(username string, password string) bool {
 		if m.clients == nil {
 			m.clients = make(map[string]credentials, 0)
 		}
-		m.clients[username] = credentials{username: username, password:[]byte(password)}
+		pwd, err := m.getSaltedHashedPassword(password)
+		if err != nil {
+			return false
+		}
+		m.clients[username] = credentials{username: username, password: pwd}
 		log.Printf("Registering: %s", username)
 		return true
 	}
@@ -35,11 +40,24 @@ func (m *Manager) CheckClientCredentials(username string, password string) bool 
 	log.Printf("Validating login for: %s", username)
 	usrCrd, found := m.clients[username]
 	if found {
-		if password == string(usrCrd.password) {
-			log.Printf("Login credentials valid.")
-			return true
-		} 
+		err := bcrypt.CompareHashAndPassword(usrCrd.password, []byte(password))
+		if err != nil {
+			log.Println(err)
+			return false
+		}
+		log.Printf("Login credentials valid.")
+		return true
 	}
 	log.Printf("Login credentials invalid.")
 	return false
-} 
+}
+
+func (m *Manager) getSaltedHashedPassword(password string) ( []byte, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	return hash, nil
+
+}
