@@ -4,12 +4,13 @@ import (
 	"log"
 	"net/http"
 	uuid "github.com/nu7hatch/gouuid"
-	sess "github.com/kllpw/kllpw-web/client/sess"
+	sess "github.com/kllpw/kllpw-web/client/session"
 	cred "github.com/kllpw/kllpw-web/client/cred"
 )
 // Client is uuid of current client
 type Client struct {
-	uuid *uuid.UUID
+	UUID *uuid.UUID
+	Name string
 }
 
 var sessManager sess.Manager
@@ -19,14 +20,27 @@ var credManager cred.Manager
 type Manager struct {
 	sessManager *sess.Manager
 	credManager *cred.Manager
+	clientSessionStore map[*uuid.UUID]*Client
 }
 
 // NewManager returns a client manger with session and credential checks
 func NewManager(sesskey string) *Manager {
 	sm := sess.NewManager(sesskey)
 	cm := cred.NewManager()
-	m := Manager{sessManager: sm, credManager: cm}
+	css := make(map[*uuid.UUID]*Client)
+	m := Manager{sessManager: sm, credManager: cm, clientSessionStore: css}
 	return &m
+}
+// GetClient returns a populated client from session side checkes 
+func (m *Manager) GetClient(w http.ResponseWriter, r *http.Request) *Client {
+	if m.sessManager.IsClientAuthed(w, r) {
+		uuid, err := m.sessManager.GetClientUUID(w, r)
+		if err != nil {
+			return nil
+		}
+		return m.clientSessionStore[uuid]
+	}
+	return nil
 }
 
 // IsValidClient checks for stored session key if non found checks basic auth credentials
@@ -45,7 +59,14 @@ func (m *Manager) RegisterClient(w http.ResponseWriter, r *http.Request) bool {
 func (m *Manager) LoginClient(w http.ResponseWriter, r *http.Request) bool {
 	u, p, _ := r.BasicAuth()
 	if m.credManager.CheckClientCredentials(u, p) {
-		m.sessManager.AuthenticateClient(w, r)
+		uuid, _ := m.sessManager.GetClientUUID(w, r)
+		if uuid != nil {
+			log.Printf("Login successful reissued token")
+			return true
+		}
+		cUUID := m.sessManager.AuthenticateClient(w, r)
+		client := Client{UUID: cUUID, Name: u}
+		m.clientSessionStore[cUUID] = &client
 		log.Printf("Login successful")
 		return true
 	}
