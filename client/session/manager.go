@@ -2,24 +2,24 @@ package client
 
 import (
 	"encoding/gob"
+	"errors"
 	"log"
 	"net/http"
+
 	"github.com/gorilla/sessions"
 	uuid "github.com/nu7hatch/gouuid"
-	"errors"
 )
 
 const (
-	authKey string = "auth"
+	authKey    string = "auth"
 	sessionKey string = "kllpw"
 )
 
 // Manager is for storing client sessions
 type Manager struct {
-	store *sessions.CookieStore
+	store          *sessions.CookieStore
 	activeSessions []*uuid.UUID
 }
-
 
 // NewManager returns a new manager with key from OS variable "SESSION_KEYS"
 func NewManager(sesskey string) *Manager {
@@ -28,7 +28,7 @@ func NewManager(sesskey string) *Manager {
 	return &m
 }
 
-func init(){
+func init() {
 	gob.Register(uuid.UUID{})
 }
 
@@ -44,28 +44,36 @@ func (m *Manager) AuthenticateClient(w http.ResponseWriter, r *http.Request) *uu
 }
 
 // DeauthenticateClient removes client from session store
-func (m *Manager) DeauthenticateClient(w http.ResponseWriter, r *http.Request){
+func (m *Manager) DeauthenticateClient(w http.ResponseWriter, r *http.Request) {
 	session, _ := m.store.Get(r, sessionKey)
 	_, uuidPos, _ := m.getClientUUIDAndPosition(w, r)
 	if uuidPos > -1 {
-	m.removeUUID(uuidPos)
-	session.Save(r, w)
+		m.removeUUID(uuidPos)
+		session.Save(r, w)
 	}
 }
 
 func (m *Manager) getClientUUIDAndPosition(w http.ResponseWriter, r *http.Request) (*uuid.UUID, int, error) {
-	session, _ := m.store.Get(r, sessionKey)
+	session, err := m.store.Get(r, sessionKey)
+	if err != nil {
+		log.Printf("Error %s", err.Error())
+	}
 	currentUUID := session.Values[authKey]
 	uuidPos := -1
 	if currentUUID != nil {
-		u := currentUUID.(*uuid.UUID)
-		uuidPos = m.findUUID(u)
+		switch u := currentUUID.(type) {
+			case uuid.UUID:
+				uuidPos = m.findUUID(&u)
+			case *uuid.UUID:
+				uuidPos = m.findUUID(u)
+		}
 		if uuidPos > -1 {
-			return m.activeSessions[uuidPos], uuidPos, nil		
+			return m.activeSessions[uuidPos], uuidPos, nil
 		}
 	}
-	return nil, -1, errors.New("No UUID Found")	
+	return nil, -1, errors.New("no UUID found")
 }
+
 // GetClientUUID gets uuid for current request session
 func (m *Manager) GetClientUUID(w http.ResponseWriter, r *http.Request) (*uuid.UUID, error) {
 	cUUID, _, err := m.getClientUUIDAndPosition(w, r)
@@ -73,7 +81,7 @@ func (m *Manager) GetClientUUID(w http.ResponseWriter, r *http.Request) (*uuid.U
 		return nil, err
 	}
 	return cUUID, nil
-	
+
 }
 
 func (m *Manager) findUUID(currentUUID *uuid.UUID) (pos int) {
@@ -86,16 +94,14 @@ func (m *Manager) findUUID(currentUUID *uuid.UUID) (pos int) {
 }
 
 func (m *Manager) removeUUID(index int) {
-    m.activeSessions = append(m.activeSessions[:index], m.activeSessions[index+1:]...)
+	m.activeSessions = append(m.activeSessions[:index], m.activeSessions[index+1:]...)
 }
-
 
 // IsClientAuthed checks if request is in the session store and has the authKey value set to true
 func (m *Manager) IsClientAuthed(w http.ResponseWriter, r *http.Request) bool {
 	_, _, err := m.getClientUUIDAndPosition(w, r)
 	if err != nil {
-		return false	
+		return false
 	}
-	return true	
+	return true
 }
-

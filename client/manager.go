@@ -60,11 +60,6 @@ func (m *Manager) RegisterClient(w http.ResponseWriter, r *http.Request) bool {
 func (m *Manager) LoginClient(w http.ResponseWriter, r *http.Request) bool {
 	u, p, _ := r.BasicAuth()
 	if m.credManager.CheckClientCredentials(u, p) {
-		uuid, _ := m.sessManager.GetClientUUID(w, r)
-		if uuid != nil {
-			log.Printf("Login successful reissued token")
-			return true
-		}
 		cUUID := m.sessManager.AuthenticateClient(w, r)
 		client := Client{UUID: cUUID, Name: u}
 		m.clientSessionStore[cUUID] = &client

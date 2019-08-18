@@ -39,8 +39,6 @@ func TestGetClient(t *testing.T) {
 	if client == nil {
 		t.Error("Client should be registered and returned")
 	}
-	
-
 }
 
 func TestIsValidClient(t *testing.T) {
