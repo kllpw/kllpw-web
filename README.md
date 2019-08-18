@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.com/kllpw/kllpw-web.svg?token=QDm1qJHVDGzwNPWjYxuy&branch=master)](https://travis-ci.com/kllpw/kllpw-web)
 
+[![Coverage Status](https://coveralls.io/repos/github/kllpw/kllpw-web/badge.svg?branch=master)](https://coveralls.io/github/kllpw/kllpw-web?branch=master)
+
 
      ██ ▄█▀ ██▓     ██▓          ██▓███   █     █░
      ██▄█▒ ▓██▒    ▓██▒         ▓██░  ██▒▓█░ █ ░█░
