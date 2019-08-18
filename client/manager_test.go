@@ -19,8 +19,32 @@ func TestRegisterClient(t *testing.T) {
 	}
 }
 
-func TestIsValidClient(t *testing.T) {
+func TestGetClient(t *testing.T) {
 	var cMan = NewManager("Test2")
+	req := populatedRequest()
+	client := cMan.GetClient(httptest.NewRecorder(), req) 
+	if client != nil {
+		t.Error("Client should not be registered yet")
+	}
+	isClientReg := cMan.RegisterClient(httptest.NewRecorder(), req) 
+	if !isClientReg {
+		t.Error("No clients registered should not be valid")	
+	}
+	login := cMan.LoginClient(httptest.NewRecorder(), req)
+	if !login {
+		t.Error("Clients registered should login")
+		t.Fail()
+	}
+	client = cMan.GetClient(httptest.NewRecorder(), req) 
+	if client == nil {
+		t.Error("Client should be registered and returned")
+	}
+	
+
+}
+
+func TestIsValidClient(t *testing.T) {
+	var cMan = NewManager("Test3")
 	req := populatedRequest()
 	isClientReg := cMan.RegisterClient(httptest.NewRecorder(), req)
 	if !isClientReg {
@@ -50,7 +74,7 @@ func TestIsValidClient(t *testing.T) {
 }
 
 func TestLoginClient(t *testing.T) {
-	var cMan = NewManager("Test3")
+	var cMan = NewManager("Test4")
 	req := populatedRequest()
 	isClientReg := cMan.RegisterClient(httptest.NewRecorder(), req)
 	if !isClientReg {

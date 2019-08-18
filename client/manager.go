@@ -31,11 +31,12 @@ func NewManager(sesskey string) *Manager {
 	m := Manager{sessManager: sm, credManager: cm, clientSessionStore: css}
 	return &m
 }
-// GetClient returns a populated client from session side checkes 
+// GetClient returns a populated client from session side checks returns nil if not found
 func (m *Manager) GetClient(w http.ResponseWriter, r *http.Request) *Client {
 	if m.sessManager.IsClientAuthed(w, r) {
 		uuid, err := m.sessManager.GetClientUUID(w, r)
 		if err != nil {
+			log.Printf("Client not found %s", uuid)
 			return nil
 		}
 		return m.clientSessionStore[uuid]
