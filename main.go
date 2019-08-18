@@ -117,7 +117,7 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 
 func userHomeHandeler(w http.ResponseWriter, r *http.Request) {
 	client := clientManager.GetClient(w, r)
-	name := ascii.RenderString("Welcome " + client.Name)
+	name := ascii.RenderString(client.Name)
 	fmt.Fprint(w,
 		"<html><pre>"+
 		name +
