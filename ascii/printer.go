@@ -6,11 +6,10 @@ var ascii, options = initASCII()
 
 func initASCII() (*figlet4go.AsciiRender, *figlet4go.RenderOptions) {
 	ascii := figlet4go.NewAsciiRender()
-	// Adding the colors to RenderOptions
+	// Adding the colours to RenderOptions
 	options := figlet4go.NewRenderOptions()
 	options.FontName = "bloody"
 	options.FontColor = []figlet4go.Color{
-		// Colors can be given by default ansi color codes...
 		figlet4go.ColorCyan,
 	}
 	ascii.LoadFont("./static/fonts/")
