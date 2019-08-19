@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/kllpw/kllpw-web/ascii"
-	"github.com/kllpw/kllpw-web/client"
+	"github.com/kllpw/kllpw-web/user"
 	"log"
 	"net/http"
 	"os"
 )
 
-var clientManager = client.NewManager(os.Getenv("SESSION_KEYS"))
+var clientManager = user.NewManager(os.Getenv("SESSION_KEYS"))
 
 func protection(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
@@ -120,8 +120,8 @@ func userHomeHandeler(w http.ResponseWriter, r *http.Request) {
 	name := ascii.RenderString(client.Name)
 	fmt.Fprint(w,
 		"<html><pre>"+
-		name +
-		`</pre>
+			name+
+			`</pre>
         <a href="/user/logout">logout</a>
         <a href="/user/home">home/dashboard</a>
         </html>`)
