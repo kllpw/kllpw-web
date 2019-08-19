@@ -10,11 +10,11 @@ import (
 	"os"
 )
 
-var clientManager = user.NewManager(os.Getenv("SESSION_KEYS"))
+var userManager = user.NewManager(os.Getenv("SESSION_KEYS"))
 
 func protection(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		if clientManager.IsValidClient(w, r) {
+		if userManager.IsUserAuthenticated(w, r) {
 			next.ServeHTTP(w, r)
 		} else {
 			http.Error(w, "Forbidden", http.StatusForbidden)
@@ -35,10 +35,10 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
-	if clientManager.LoginClient(w, r) {
+	if userManager.LoginUser(w, r) {
 		fmt.Fprint(w, "Successful")
 	} else {
-		clientManager.LogoutClient(w, r)
+		userManager.LogoutUser(w, r)
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 	}
 }
@@ -102,22 +102,22 @@ func loginFormHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func registerHandler(w http.ResponseWriter, r *http.Request) {
-	if clientManager.RegisterClient(w, r) {
-		fmt.Fprint(w, "Client Registered")
+	if userManager.RegisterUser(w, r) {
+		fmt.Fprint(w, "User Registered")
 	} else {
-		fmt.Fprint(w, "Client Registration failed")
+		fmt.Fprint(w, "User Registration failed")
 	}
 
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
-	clientManager.LogoutClient(w, r)
+	userManager.LogoutUser(w, r)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func userHomeHandeler(w http.ResponseWriter, r *http.Request) {
-	client := clientManager.GetClient(w, r)
-	name := ascii.RenderString(client.Name)
+	user := userManager.GetUser(w, r)
+	name := ascii.RenderString(user.Name)
 	fmt.Fprint(w,
 		"<html><pre>"+
 			name+
