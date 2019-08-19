@@ -14,21 +14,19 @@ const (
 	authKey string = "auth"
 )
 
-var (
-	sessionKey = "kllpw"
-)
-
 // Manager is for storing http user sessions
 type Manager struct {
 	store          *sessions.CookieStore
 	activeSessions []*uuid.UUID
+	sessionKey     string
 }
 
 // NewManager returns a new manager with key from OS variable "SESSION_KEYS"
-func NewManager(sesskey string) *Manager {
+func NewManager(sessionkey string) *Manager {
 	m := Manager{}
-	sessionKey = sesskey
-	m.store = sessions.NewCookieStore([]byte(sessionKey))
+	m.sessionKey = sessionkey
+	m.store = sessions.NewCookieStore([]byte(m.sessionKey))
+	m.activeSessions = make([]*uuid.UUID, 0)
 	return &m
 }
 
@@ -38,7 +36,7 @@ func init() {
 
 // AuthenticateUser adds user to session store
 func (m *Manager) AuthenticateUser(w http.ResponseWriter, r *http.Request) *uuid.UUID {
-	session, _ := m.store.Get(r, sessionKey)
+	session, _ := m.store.Get(r, m.sessionKey)
 	cUUID, _ := uuid.NewV4()
 	m.activeSessions = append(m.activeSessions, cUUID)
 	session.Values[authKey] = cUUID
@@ -49,7 +47,7 @@ func (m *Manager) AuthenticateUser(w http.ResponseWriter, r *http.Request) *uuid
 
 // DeauthenticateUser removes user from session store
 func (m *Manager) DeauthenticateUser(w http.ResponseWriter, r *http.Request) {
-	session, _ := m.store.Get(r, sessionKey)
+	session, _ := m.store.Get(r, m.sessionKey)
 	_, uuidPos, _ := m.getUserUUIDAndPosition(w, r)
 	if uuidPos > -1 {
 		m.removeUUID(uuidPos)
@@ -58,7 +56,7 @@ func (m *Manager) DeauthenticateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (m *Manager) getUserUUIDAndPosition(w http.ResponseWriter, r *http.Request) (*uuid.UUID, int, error) {
-	session, err := m.store.Get(r, sessionKey)
+	session, err := m.store.Get(r, m.sessionKey)
 	if err != nil {
 		log.Printf("Error %s", err.Error())
 	}
