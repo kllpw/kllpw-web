@@ -82,12 +82,9 @@ func (m *Manager) getUUIDPosition(currentUUID interface{}) int {
 }
 
 // GetUserUUID gets uuid for current request session
-func (m *Manager) GetUserUUID(w http.ResponseWriter, r *http.Request) (*uuid.UUID, error) {
-	cUUID, _, err := m.getUserUUIDAndPosition(w, r)
-	if err != nil {
-		return nil, err
-	}
-	return cUUID, nil
+func (m *Manager) GetUserUUID(w http.ResponseWriter, r *http.Request) *uuid.UUID {
+	cUUID, _, _ := m.getUserUUIDAndPosition(w, r)
+	return cUUID
 }
 
 func (m *Manager) findUUID(currentUUID *uuid.UUID) (pos int) {

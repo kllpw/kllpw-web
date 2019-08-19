@@ -36,11 +36,7 @@ func NewManager(sesskey string) *Manager {
 // GetUser returns a populated user from session side checks returns nil if not found
 func (m *Manager) GetUser(w http.ResponseWriter, r *http.Request) *User {
 	if m.sessManager.IsUserAuthed(w, r) {
-		uuid, err := m.sessManager.GetUserUUID(w, r)
-		if err != nil {
-			log.Printf("User not found %s", uuid)
-			return nil
-		}
+		uuid := m.sessManager.GetUserUUID(w, r)
 		return m.userSessionStore[uuid]
 	}
 	return nil
