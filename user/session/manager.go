@@ -56,10 +56,7 @@ func (m *Manager) DeauthenticateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (m *Manager) getUserUUIDAndPosition(w http.ResponseWriter, r *http.Request) (*uuid.UUID, int, error) {
-	session, err := m.store.Get(r, m.sessionKey)
-	if err != nil {
-		log.Printf("Error %s", err.Error())
-	}
+	session, _ := m.store.Get(r, m.sessionKey)
 	currentUUID := session.Values[authKey]
 	if currentUUID != nil {
 		uuidPos := m.getUUIDPosition(currentUUID)
@@ -100,8 +97,8 @@ func (m *Manager) removeUUID(index int) {
 	m.activeSessions = append(m.activeSessions[:index], m.activeSessions[index+1:]...)
 }
 
-// IsUserAuthed checks if request is in the session store and has the authKey value set to true
-func (m *Manager) IsUserAuthed(w http.ResponseWriter, r *http.Request) bool {
+// IsUserAuthenticated checks if request is in the session store and has the authKey value set to true
+func (m *Manager) IsUserAuthenticated(w http.ResponseWriter, r *http.Request) bool {
 	_, _, err := m.getUserUUIDAndPosition(w, r)
 	if err != nil {
 		return false

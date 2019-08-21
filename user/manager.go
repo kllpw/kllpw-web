@@ -35,7 +35,7 @@ func NewManager(sesskey string) *Manager {
 
 // GetUser returns a populated user from session side checks returns nil if not found
 func (m *Manager) GetUser(w http.ResponseWriter, r *http.Request) *User {
-	if m.sessManager.IsUserAuthed(w, r) {
+	if m.sessManager.IsUserAuthenticated(w, r) {
 		uuid := m.sessManager.GetUserUUID(w, r)
 		return m.userSessionStore[uuid]
 	}
@@ -44,7 +44,7 @@ func (m *Manager) GetUser(w http.ResponseWriter, r *http.Request) *User {
 
 // IsUserAuthenticated checks for stored session key if non found checks basic auth credentials
 func (m *Manager) IsUserAuthenticated(w http.ResponseWriter, r *http.Request) bool {
-	return m.sessManager.IsUserAuthed(w, r)
+	return m.sessManager.IsUserAuthenticated(w, r)
 }
 
 // RegisterUser stores provided username and password for checks later

@@ -51,7 +51,7 @@ func TestIsValidUser(t *testing.T) {
 	}
 	valid := cMan.IsUserAuthenticated(httptest.NewRecorder(), req)
 	if valid {
-		t.Error("No users registered should not be valid")
+		t.Error("No users logged in so request should not be Authenticated")
 		t.Fail()
 	}
 	login := cMan.LoginUser(httptest.NewRecorder(), req)
@@ -79,14 +79,19 @@ func TestLoginUser(t *testing.T) {
 	if !isUserReg {
 		t.Error("No users registered should not valid")
 	}
-	login := cMan.LoginUser(httptest.NewRecorder(), req)
-	if !login {
-		t.Error("Users registered should login")
-		t.Fail()
-	}
 	badLogin := cMan.LoginUser(httptest.NewRecorder(), badRequest())
 	if badLogin {
 		t.Error("Invalid password should not login")
+		t.Fail()
+	}
+	badLoginUser := cMan.LoginUser(httptest.NewRecorder(), badRequestUsername())
+	if badLoginUser {
+		t.Error("Invalid username should not login")
+		t.Fail()
+	}
+	login := cMan.LoginUser(httptest.NewRecorder(), req)
+	if !login {
+		t.Error("Users registered should login")
 		t.Fail()
 	}
 }
@@ -102,7 +107,11 @@ func badRequest() *http.Request {
 	req.Header.Add("Authorization", "Basic "+basicAuth("username1", "badpassword"))
 	return req
 }
-
+func badRequestUsername() *http.Request {
+	req, _ := http.NewRequest("GET", "http://localhost/", nil)
+	req.Header.Add("Authorization", "Basic "+basicAuth("username12", "badpassword"))
+	return req
+}
 func basicAuth(username, password string) string {
 	auth := username + ":" + password
 	return base64.StdEncoding.EncodeToString([]byte(auth))

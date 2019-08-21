@@ -20,13 +20,7 @@ func NewManager() *Manager {
 func (m *Manager) RegisterUser(username string, password string) bool {
 	_, found := m.users[username]
 	if !found {
-		if m.users == nil {
-			m.users = make(map[string]credentials, 0)
-		}
-		pwd, err := m.getSaltedHashedPassword(password)
-		if err != nil {
-			return false
-		}
+		pwd := m.getSaltedHashedPassword(password)
 		m.users[username] = credentials{username: username, password: pwd}
 		log.Printf("Registering: %s", username)
 		return true
@@ -52,12 +46,9 @@ func (m *Manager) IsUserCredentialsValid(username string, password string) bool 
 	return false
 }
 
-func (m *Manager) getSaltedHashedPassword(password string) ([]byte, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-	return hash, nil
+func (m *Manager) getSaltedHashedPassword(password string) []byte {
+	// Should never err as using bcrypyt.DefaultCost
+	hash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	return hash
 
 }
