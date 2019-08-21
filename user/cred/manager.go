@@ -5,6 +5,12 @@ import (
 	"log"
 )
 
+// Credentials are struct for Client credentials
+type credentials struct {
+	username string
+	password []byte
+}
+
 // Manager is for storing user Creds
 type Manager struct {
 	users map[string]credentials
