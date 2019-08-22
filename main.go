@@ -4,12 +4,42 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/kllpw/kllpw-web/ascii"
+	"github.com/kllpw/kllpw-web/render"
 	"github.com/kllpw/kllpw-web/user"
 	"log"
 	"net/http"
 	"os"
 )
+var index = render.Page{
+	Filename:     "index.html",
+	Title:        "kllpw",
+	Header:       header,
+	ContentTitle: "",
+	Content:      nil,
+}
+var login = render.Page{
+	Filename:     "login.html",
+	Title:        "kllpw",
+	Header:       header,
+	ContentTitle: "",
+	Content:      nil,
+}
+var register = render.Page{
+	Filename:     "register.html",
+	Title:        "kllpw",
+	Header:       header,
+	ContentTitle: "",
+	Content:      nil,
+}
+var userHome = render.Page{
+	Filename:     "userHome.html",
+	Title:        "kllpw",
+	Header:       "",
+	ContentTitle: "",
+	Content:      nil,
+}
 
+var header = ascii.RenderString(" kll.pw")
 var userManager = user.NewManager(os.Getenv("SESSION_KEYS"))
 
 func protection(next http.Handler) http.Handler {
@@ -24,19 +54,12 @@ func protection(next http.Handler) http.Handler {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	header := ascii.RenderStringHTML(" kll.pw")
-	fmt.Fprint(w,
-		"<html>"+
-			header+
-			`
-        <a href="/user">register</a>
-        <a href="/user">login</a>
-        </html>`)
+	render.WritePageToTemplate(w, index, render.GetPageTemplate(index))
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	if userManager.LoginUser(w, r) {
-		fmt.Fprint(w, "Successful")
+		render.WritePageToTemplate(w, login, render.GetPageTemplate(login))
 	} else {
 		userManager.LogoutUser(w, r)
 		http.Error(w, "Bad Request", http.StatusBadRequest)
@@ -44,61 +67,11 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func loginFormHandler(w http.ResponseWriter, r *http.Request) {
-	header := ascii.RenderStringHTML(" kll.pw")
-	fmt.Fprint(w,
-		`<html><header>
-        <script>
-        function authenticateUser(user, password)
-        {
-            var token = user + ":" + password;
-            var hash = btoa(token); 
+	render.WritePageToTemplate(w, login, render.GetPageTemplate(login))
+}
 
-            return "Basic " + hash;
-        }
-        function requestAuthentication() {
-            var username=document.getElementById("username").value;
-            var password=document.getElementById("password").value;
-            // New XMLHTTPRequest
-            var request = new XMLHttpRequest();
-            request.open("POST", "/user/login", false);
-            request.setRequestHeader("Authorization", authenticateUser(username, password));  
-			request.send();
-			
-			// view request status
-			document.getElementById("response").innerHTML = request.responseText;
-			if (request.status == "200"){
-				window.location.href = '/user/home';
-			}
-            
-        }
-        function register() {
-            var username=document.getElementById("username").value;
-            var password=document.getElementById("password").value;
-            
-            // New XMLHTTPRequest
-            var request = new XMLHttpRequest();
-            request.open("POST", "/user/register", false);
-            request.setRequestHeader("Authorization", authenticateUser(username, password));  
-            request.send();
-			// view request status
-            document.getElementById("response").innerHTML = request.responseText;
-			
-        }
-        </script>
-        </header>`+
-			header+
-			`<div>
-		<a href="/">home </a>
-		<br>
-        <label>Username:</label><input id="username" name="username"></input>
-        <label>Password:</label><input type="password" id="password" name="password"></input>
-        <input type="button" value="register"onclick="register();"></input>
-		<input type="button" value="login" onclick="requestAuthentication();"></input>
-		<br>
-		<label>Response:</label><label id="response" name="response">Waiting....</label>
-        </div>
-        </html>`)
-
+func registerFormHandler(w http.ResponseWriter, r *http.Request) {
+	render.WritePageToTemplate(w, register, render.GetPageTemplate(register))
 }
 
 func registerHandler(w http.ResponseWriter, r *http.Request) {
@@ -107,7 +80,6 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		fmt.Fprint(w, "User Registration failed")
 	}
-
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
@@ -115,34 +87,37 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-func userHomeHandeler(w http.ResponseWriter, r *http.Request) {
+func userHomeHandler(w http.ResponseWriter, r *http.Request) {
 	user := userManager.GetUser(w, r)
-	name := ascii.RenderString(user.Name)
-	fmt.Fprint(w,
-		"<html><pre>"+
-			name+
-			`</pre>
-        <a href="/user/logout">logout</a>
-        <a href="/user/home">home/dashboard</a>
-        </html>`)
+	popUserHome := userHome
+	popUserHome.Header = ascii.RenderString(user.Name)
+	popUserHome.ContentTitle = "details:"
+	popUserHome.Content = map[string]interface{}{
+		"User" : user,
+	}
+	render.WritePageToTemplate(w, popUserHome, render.GetPageTemplate(popUserHome))
 }
 
 func main() {
 	fmt.Print("\n" + ascii.RenderString(" kll.pw"))
 	r := mux.NewRouter()
 	r.HandleFunc("/", indexHandler)
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./render/templates/static/"))))
 
 	userRoute := r.PathPrefix("/user").Subrouter()
-	userRoute.HandleFunc("", loginFormHandler)
-	userRoute.HandleFunc("/login", loginHandler)
+	userRoute.HandleFunc("/login", loginFormHandler)
 	userRoute.HandleFunc("/logout", logoutHandler)
-	userRoute.HandleFunc("/register", registerHandler)
+	userRoute.HandleFunc("/register", registerFormHandler)
+
+	userRequest := userRoute.PathPrefix("/req").Subrouter()
+	userRequest.HandleFunc("/login", loginHandler)
+	userRequest.HandleFunc("/logout", logoutHandler)
+	userRequest.HandleFunc("/register", registerHandler)
 
 	protected := r.PathPrefix("/user").Subrouter()
 	protected.Use(protection)
-	protected.HandleFunc("/home", userHomeHandeler)
+	protected.HandleFunc("/home", userHomeHandler)
 
 	log.Println("Ready...")
-	log.Fatal(http.ListenAndServe("localhost:8000", r))
-
+	log.Fatal(http.ListenAndServeTLS("", os.Getenv("SSLCERT"), os.Getenv("SSLKEY"), r))
 }
