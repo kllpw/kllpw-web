@@ -21,7 +21,7 @@ type Manager struct {
 	sessionKey     string
 }
 
-// NewManager returns a new manager with key from OS variable "SESSION_KEYS"
+// NewManager returns a new manager with key provided
 func NewManager(sessionkey string) *Manager {
 	m := Manager{}
 	m.sessionKey = sessionkey
