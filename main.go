@@ -10,36 +10,7 @@ import (
 	"net/http"
 	"os"
 )
-var index = render.Page{
-	Filename:     "index.html",
-	Title:        "kllpw",
-	Header:       header,
-	ContentTitle: "",
-	Content:      nil,
-}
-var login = render.Page{
-	Filename:     "login.html",
-	Title:        "kllpw",
-	Header:       header,
-	ContentTitle: "",
-	Content:      nil,
-}
-var register = render.Page{
-	Filename:     "register.html",
-	Title:        "kllpw",
-	Header:       header,
-	ContentTitle: "",
-	Content:      nil,
-}
-var userHome = render.Page{
-	Filename:     "userHome.html",
-	Title:        "kllpw",
-	Header:       "",
-	ContentTitle: "",
-	Content:      nil,
-}
 
-var header = ascii.RenderString(" kll.pw")
 var userManager = user.NewManager(os.Getenv("SESSION_KEYS"))
 
 func protection(next http.Handler) http.Handler {
@@ -54,12 +25,12 @@ func protection(next http.Handler) http.Handler {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	render.WritePageToTemplate(w, index, render.GetPageTemplate(index))
+	render.WritePageToTemplate(w, render.Index, render.GetPageTemplate(render.Index))
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	if userManager.LoginUser(w, r) {
-		render.WritePageToTemplate(w, login, render.GetPageTemplate(login))
+		render.WritePageToTemplate(w, render.Login, render.GetPageTemplate(render.Login))
 	} else {
 		userManager.LogoutUser(w, r)
 		http.Error(w, "Bad Request", http.StatusBadRequest)
@@ -67,11 +38,11 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func loginFormHandler(w http.ResponseWriter, r *http.Request) {
-	render.WritePageToTemplate(w, login, render.GetPageTemplate(login))
+	render.WritePageToTemplate(w, render.Login, render.GetPageTemplate(render.Login))
 }
 
 func registerFormHandler(w http.ResponseWriter, r *http.Request) {
-	render.WritePageToTemplate(w, register, render.GetPageTemplate(register))
+	render.WritePageToTemplate(w, render.Register, render.GetPageTemplate(render.Register))
 }
 
 func registerHandler(w http.ResponseWriter, r *http.Request) {
@@ -89,7 +60,7 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 
 func userHomeHandler(w http.ResponseWriter, r *http.Request) {
 	user := userManager.GetUser(w, r)
-	popUserHome := userHome
+	popUserHome := render.UserHome
 	popUserHome.Header = ascii.RenderString(user.Name)
 	popUserHome.ContentTitle = "details:"
 	popUserHome.Content = map[string]interface{}{
