@@ -70,5 +70,7 @@ func (m *Manager) LoginUser(w http.ResponseWriter, r *http.Request) bool {
 
 // LogoutUser removes session stored auth cookie
 func (m *Manager) LogoutUser(w http.ResponseWriter, r *http.Request) {
+	uuid := m.sessManager.GetUserUUID(w, r)
+	delete(m.userSessionStore, uuid)
 	m.sessManager.DeauthenticateUser(w, r)
 }
