@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<header>
+    <link rel="stylesheet" type="text/css" href="/static/css/kllpw.css">
+    <script src="/static/js/kllpw.js"></script>
+</header>
+<head>
+    <meta charset="UTF-8">
+    <title>{{.Title}}</title>
+</head>
+<body>
+<div id="header" class="ascii-art">{{.Header}}</div>
+
+<a href="/">home</a>
+<a href="/user/logout">logout</a>
+<br>
+<button onclick="colour('red')">o</button>
+<button onclick="colour('green')">o</button>
+<button onclick="colour('blue')">o</button>
+<button onclick="colour('teal')">o</button>
+<button onclick="colour('black')">o</button>
+<button onclick="colour('grey')">o</button>
+
+<h2>{{.ContentTitle}}</h2>
+{{ range $key, $value := .Content }}
+    <li><strong>{{ $key }}</strong>: {{ $value }}</li>
+{{ end }}
+</body>
+</html>

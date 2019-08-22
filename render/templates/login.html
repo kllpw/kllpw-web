@@ -1,0 +1,15 @@
+<html>
+<header>
+    <link rel="stylesheet" type="text/css" href="/static/css/kllpw.css">
+    <script src="/static/js/kllpw.js"></script>
+</header>
+
+<div class="ascii-art">{{.Header}}</div>
+<div>
+    <a href="/">home </a>
+    <br>
+    <label>Username:</label><input id="username" name="username"></input>
+    <label>Password:</label><input type="password" id="password" name="password"></input>
+    <input type="button" value="login" onclick="requestAuthentication();"></input>
+</div>
+</html>
