@@ -3,15 +3,14 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/kllpw/kllpw-web/ascii"
-	"github.com/kllpw/kllpw-web/render"
-	"github.com/kllpw/kllpw-web/user"
+	"kllpw-web/ascii"
+	"kllpw-web/render"
+	"kllpw-web/user"
 	"log"
 	"net/http"
-	"os"
 )
 
-var userManager = user.NewManager(os.Getenv("SESSION_KEYS"))
+var userManager = user.NewManager("SESSION_KEYS")
 
 func protection(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
@@ -25,6 +24,10 @@ func protection(next http.Handler) http.Handler {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
+	if userManager.IsUserAuthenticated(w, r){
+		userHomeHandler(w, r)
+		return
+	}
 	render.WritePageToTemplate(w, render.Index, render.GetPageTemplate(render.Index))
 }
 
@@ -90,5 +93,5 @@ func main() {
 	protected.HandleFunc("/home", userHomeHandler)
 
 	log.Println("Ready...")
-	log.Fatal(http.ListenAndServeTLS("", os.Getenv("SSLCERT"), os.Getenv("SSLKEY"), r))
+	log.Fatal(http.ListenAndServe("", r))
 }

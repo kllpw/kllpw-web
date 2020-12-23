@@ -1,6 +1,11 @@
 package ascii
 
-import "github.com/mbndr/figlet4go"
+import (
+	"cloud.google.com/go/storage"
+	"context"
+	"github.com/mbndr/figlet4go"
+	"google.golang.org/api/option"
+)
 
 var ascii, options = initASCII()
 
